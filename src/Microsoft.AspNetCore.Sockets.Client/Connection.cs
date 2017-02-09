@@ -19,6 +19,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
         private int _connectionState = ConnectionState.Initial;
         private IChannelConnection<Message> _transportChannel;
         private ITransport _transport;
+        private Task _receiveLoopTask;
 
         private ReadableChannel<Message> Input => _transportChannel.Input;
         private WritableChannel<Message> Output => _transportChannel.Output;
@@ -66,6 +67,9 @@ namespace Microsoft.AspNetCore.Sockets.Client
                 Interlocked.Exchange(ref _connectionState, ConnectionState.Disconnected);
                 throw;
             }
+
+            // start receive loop
+            _receiveLoopTask = ReceiveAsync();
 
             Interlocked.Exchange(ref _connectionState, ConnectionState.Connected);
 
@@ -146,52 +150,36 @@ namespace Microsoft.AspNetCore.Sockets.Client
             }
         }
 
-        public Task<bool> ReceiveAsync(ReceiveData receiveData)
+        private async Task ReceiveAsync()
         {
-            return ReceiveAsync(receiveData, CancellationToken.None);
-        }
-
-        public async Task<bool> ReceiveAsync(ReceiveData receiveData, CancellationToken cancellationToken)
-        {
-            if (receiveData == null)
-            {
-                throw new ArgumentNullException(nameof(receiveData));
-            }
-
-            if (Input.Completion.IsCompleted)
-            {
-                throw new InvalidOperationException("Cannot receive messages when the connection is stopped.");
-            }
-
             try
             {
-                while (await Input.WaitToReadAsync(cancellationToken))
+                _logger.LogTrace("Beginning receive loop");
+
+                while (await Input.WaitToReadAsync())
                 {
                     if (Input.TryRead(out Message message))
                     {
                         using (message)
                         {
-                            receiveData.Format = message.MessageFormat;
-                            receiveData.Data = message.Payload.Buffer.ToArray();
-                            return true;
+                            var receivedEventHandler = Received;
+                            if (receivedEventHandler != null)
+                            {
+                                receivedEventHandler(message.Payload.Buffer.ToArray(), message.MessageFormat);
+                            }
                         }
                     }
                 }
 
                 await Input.Completion;
             }
-            catch (OperationCanceledException)
-            {
-                // channel is being closed
-            }
             catch (Exception ex)
             {
                 Output.TryComplete(ex);
                 _logger.LogError("Error receiving message: {0}", ex);
-                throw;
             }
 
-            return false;
+            _logger.LogTrace("Ending receive loop");
         }
 
         public Task<bool> SendAsync(byte[] data, Format format)
@@ -201,7 +189,11 @@ namespace Microsoft.AspNetCore.Sockets.Client
 
         public async Task<bool> SendAsync(byte[] data, Format format, CancellationToken cancellationToken)
         {
-            // TODO: data == null?
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
             if (_connectionState != ConnectionState.Connected)
             {
                 return false;
@@ -232,6 +224,11 @@ namespace Microsoft.AspNetCore.Sockets.Client
             if (_transport != null)
             {
                 await _transport.StopAsync();
+            }
+
+            if (_receiveLoopTask != null)
+            {
+                await _receiveLoopTask;
             }
         }
 
