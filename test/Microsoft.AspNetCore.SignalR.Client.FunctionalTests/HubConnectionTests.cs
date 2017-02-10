@@ -50,9 +50,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             using (var httpClient = _testServer.CreateClient())
             {
                 var transport = new LongPollingTransport(httpClient, loggerFactory);
-                using (var connection = await HubConnection.ConnectAsync(new Uri("http://test/hubs"),
-                    new JsonNetInvocationAdapter(), transport, httpClient, loggerFactory))
+                using (var connection = new HubConnection(new Uri("http://test/hubs"), new JsonNetInvocationAdapter(), loggerFactory))
                 {
+                    await connection.StartAsync(transport, httpClient);
+
                     var result = await connection.Invoke<string>("HelloWorld");
 
                     Assert.Equal("Hello World!", result);
@@ -69,9 +70,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             using (var httpClient = _testServer.CreateClient())
             {
                 var transport = new LongPollingTransport(httpClient, loggerFactory);
-                using (var connection = await HubConnection.ConnectAsync(new Uri("http://test/hubs"),
-                    new JsonNetInvocationAdapter(), transport, httpClient, loggerFactory))
+                using (var connection = new HubConnection(new Uri("http://test/hubs"), new JsonNetInvocationAdapter(), loggerFactory))
                 {
+                    await connection.StartAsync(transport, httpClient);
+
                     var result = await connection.Invoke<string>("Echo", originalMessage);
 
                     Assert.Equal(originalMessage, result);
@@ -88,9 +90,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             using (var httpClient = _testServer.CreateClient())
             {
                 var transport = new LongPollingTransport(httpClient, loggerFactory);
-                using (var connection = await HubConnection.ConnectAsync(new Uri("http://test/hubs"),
-                    new JsonNetInvocationAdapter(), transport, httpClient, loggerFactory))
+                using (var connection = new HubConnection(new Uri("http://test/hubs"), new JsonNetInvocationAdapter(), loggerFactory))
                 {
+                    await connection.StartAsync(transport, httpClient);
+
                     var result = await connection.Invoke<string>("echo", originalMessage);
 
                     Assert.Equal(originalMessage, result);
@@ -107,9 +110,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             using (var httpClient = _testServer.CreateClient())
             {
                 var transport = new LongPollingTransport(httpClient, loggerFactory);
-                using (var connection = await HubConnection.ConnectAsync(new Uri("http://test/hubs"),
-                    new JsonNetInvocationAdapter(), transport, httpClient, loggerFactory))
+                using (var connection = new HubConnection(new Uri("http://test/hubs"), new JsonNetInvocationAdapter(), loggerFactory))
                 {
+                    await connection.StartAsync(transport, httpClient);
+
                     var tcs = new TaskCompletionSource<string>();
                     connection.On("Echo", new[] { typeof(string) }, a =>
                     {
@@ -132,9 +136,10 @@ namespace Microsoft.AspNetCore.SignalR.Client.FunctionalTests
             using (var httpClient = _testServer.CreateClient())
             {
                 var transport = new LongPollingTransport(httpClient, loggerFactory);
-                using (var connection = await HubConnection.ConnectAsync(new Uri("http://test/hubs"),
-                    new JsonNetInvocationAdapter(), transport, httpClient, loggerFactory))
+                using (var connection = new HubConnection(new Uri("http://test/hubs"), new JsonNetInvocationAdapter(), loggerFactory))
                 {
+                    await connection.StartAsync(transport, httpClient);
+
                     var ex = await Assert.ThrowsAnyAsync<Exception>(
                         async () => await connection.Invoke<object>("!@#$%"));
 

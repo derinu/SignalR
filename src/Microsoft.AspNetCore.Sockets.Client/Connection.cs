@@ -46,6 +46,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
         public Task StartAsync(HttpClient httpClient) => StartAsync(null, httpClient);
         public Task StartAsync(ITransport transport) => StartAsync(transport, null);
 
+        // TODO HIGH: Fix a race when the connection is being stopped/disposed when start has not finished running
         public async Task StartAsync(ITransport transport, HttpClient httpClient)
         {
             // TODO: make transport optional
@@ -162,6 +163,7 @@ namespace Microsoft.AspNetCore.Sockets.Client
                     {
                         using (message)
                         {
+                            // Do not "simplify" - events can be removed from a different thread
                             var receivedEventHandler = Received;
                             if (receivedEventHandler != null)
                             {

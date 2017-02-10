@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.AspNetCore.SignalR.Client\Microsoft.AspNetCore.SignalR.Client.csproj" />
     <ProjectReference Include="..\..\src\Microsoft.AspNetCore.Sockets.Client\Microsoft.AspNetCore.Sockets.Client.csproj" />
     <ProjectReference Include="..\..\src\Microsoft.AspNetCore.Sockets.Common\Microsoft.AspNetCore.Sockets.Common.csproj" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.2.0-*" />
