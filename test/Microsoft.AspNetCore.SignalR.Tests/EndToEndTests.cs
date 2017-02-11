@@ -89,7 +89,7 @@ namespace Microsoft.AspNetCore.SignalR.Tests
                 var receiveData = new ReceiveData();
 
                 Assert.True(await connection.ReceiveAsync(receiveData).OrTimeout());
-                Assert.Equal(message, Encoding.UTF8.GetString(receiveData.Data).Substring(0, message.Length));
+                Assert.Equal(message, Encoding.UTF8.GetString(receiveData.Data));
             }
         }
     }
